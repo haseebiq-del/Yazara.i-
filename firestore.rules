@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'role', 'isVerified']) &&
+             data.id is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 0 &&
+             data.role in ['student', 'teacher', 'parent'] &&
+             data.isVerified is bool &&
+             (!('photoUrl' in data) || data.photoUrl is string) &&
+             (!('studentId' in data) || data.studentId is string) &&
+             (!('schoolCode' in data) || data.schoolCode is string) &&
+             (!('verificationCode' in data) || data.verificationCode is string) &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidHomework(data) {
+      return data.keys().hasAll(['id', 'title', 'subject', 'teacherId', 'teacherName']) &&
+             data.id is string &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.subject is string && data.subject.size() > 0 &&
+             data.teacherId is string &&
+             data.teacherName is string &&
+             (!('description' in data) || data.description is string) &&
+             (!('dueDate' in data) || data.dueDate is string) &&
+             (!('className' in data) || data.className is string) &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time));
+    }
+
+    function isValidAttendance(data) {
+      return data.keys().hasAll(['id', 'studentId', 'studentName', 'date', 'status', 'recordedBy']) &&
+             data.id is string &&
+             data.studentId is string &&
+             data.studentName is string &&
+             data.date is string &&
+             data.status in ['Present', 'Absent', 'Late', 'Excused'] &&
+             data.recordedBy is string &&
+             (!('notes' in data) || data.notes is string) &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time));
+    }
+
+    function isValidMark(data) {
+      return data.keys().hasAll(['id', 'studentId', 'studentName', 'subject', 'examTitle', 'score', 'totalMarks', 'grade', 'recordedBy']) &&
+             data.id is string &&
+             data.studentId is string &&
+             data.studentName is string &&
+             data.subject is string &&
+             data.examTitle is string &&
+             data.score is number && data.score >= 0 &&
+             data.totalMarks is number && data.totalMarks > 0 &&
+             data.grade is string &&
+             data.recordedBy is string &&
+             (!('feedback' in data) || data.feedback is string) &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time));
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['id', 'senderId', 'senderName', 'senderRole', 'targetRole', 'title', 'content']) &&
+             data.id is string &&
+             data.senderId is string &&
+             data.senderName is string &&
+             data.senderRole is string &&
+             data.targetRole in ['all', 'students', 'parents', 'teachers'] &&
+             data.title is string && data.title.size() > 0 &&
+             data.content is string && data.content.size() > 0 &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time));
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // Homework Collection
+    match /homework/{homeworkId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidHomework(request.resource.data) && request.resource.data.teacherId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidHomework(request.resource.data) && (resource.data.teacherId == request.auth.uid || request.resource.data.teacherId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.teacherId == request.auth.uid;
+    }
+
+    // Attendance Collection
+    match /attendance/{attendanceId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidAttendance(request.resource.data);
+      allow update: if isAuthenticated() && isValidAttendance(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.recordedBy == request.auth.uid;
+    }
+
+    // Marks Collection
+    match /marks/{markId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMark(request.resource.data);
+      allow update: if isAuthenticated() && isValidMark(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.recordedBy == request.auth.uid;
+    }
+
+    // Messages Collection
+    match /messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMessage(request.resource.data) && request.resource.data.senderId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidMessage(request.resource.data) && resource.data.senderId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.senderId == request.auth.uid;
+    }
+  }
+}

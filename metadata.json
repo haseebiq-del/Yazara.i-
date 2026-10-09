@@ -1,0 +1,6 @@
+{
+  "name": "SchoolConnect",
+  "description": "Cloud-based school platform for students, teachers, and parents with homework, attendance, marks, messaging, and AI media creation tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

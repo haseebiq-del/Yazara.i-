@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role (student, teacher, parent), verification status and optional photo.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The user ID matching Firebase Auth UID" },
+        "name": { "type": "string", "description": "User display name" },
+        "email": { "type": "string", "description": "User email address" },
+        "role": { "type": "string", "enum": ["student", "teacher", "parent"], "description": "Role in the school system" },
+        "isVerified": { "type": "boolean", "description": "Email verification status" },
+        "verificationCode": { "type": "string", "description": "6-digit email verification token" },
+        "photoUrl": { "type": "string", "description": "Optional profile picture URL or avatar ID" },
+        "studentId": { "type": "string", "description": "Student ID or linked student ID for parents" },
+        "schoolCode": { "type": "string", "description": "School registration or district code" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server update timestamp" }
+      },
+      "required": ["id", "name", "email", "role", "isVerified"]
+    },
+    "Homework": {
+      "title": "Homework",
+      "description": "Homework assignment created by teachers for students.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique homework ID" },
+        "title": { "type": "string", "description": "Assignment title" },
+        "subject": { "type": "string", "description": "Academic subject" },
+        "description": { "type": "string", "description": "Assignment description and requirements" },
+        "dueDate": { "type": "string", "description": "Due date" },
+        "className": { "type": "string", "description": "Class or grade" },
+        "teacherId": { "type": "string", "description": "Teacher UID who assigned this" },
+        "teacherName": { "type": "string", "description": "Teacher display name" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["id", "title", "subject", "teacherId", "teacherName"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Daily student attendance record recorded by teachers and viewable by parents & students.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique attendance record ID" },
+        "studentId": { "type": "string", "description": "Target student ID or UID" },
+        "studentName": { "type": "string", "description": "Student name" },
+        "date": { "type": "string", "description": "Date of attendance record (YYYY-MM-DD)" },
+        "status": { "type": "string", "enum": ["Present", "Absent", "Late", "Excused"], "description": "Attendance status" },
+        "recordedBy": { "type": "string", "description": "Teacher UID who recorded the attendance" },
+        "notes": { "type": "string", "description": "Optional notes or excuse reason" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when recorded" }
+      },
+      "required": ["id", "studentId", "studentName", "date", "status", "recordedBy"]
+    },
+    "MarkRecord": {
+      "title": "MarkRecord",
+      "description": "Student exam or quiz marks updated by teachers and accessible by parents.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique mark record ID" },
+        "studentId": { "type": "string", "description": "Target student ID or UID" },
+        "studentName": { "type": "string", "description": "Student display name" },
+        "subject": { "type": "string", "description": "Subject name" },
+        "examTitle": { "type": "string", "description": "Exam, Quiz or Test title" },
+        "score": { "type": "number", "description": "Student obtained marks" },
+        "totalMarks": { "type": "number", "description": "Maximum marks possible" },
+        "grade": { "type": "string", "description": "Letter grade, e.g., A+, A, B" },
+        "feedback": { "type": "string", "description": "Teacher feedback or comment" },
+        "recordedBy": { "type": "string", "description": "Teacher UID who entered marks" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["id", "studentId", "studentName", "subject", "examTitle", "score", "totalMarks", "grade", "recordedBy"]
+    },
+    "SchoolMessage": {
+      "title": "SchoolMessage",
+      "description": "School announcement or message for students, teachers, or parents.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique message ID" },
+        "senderId": { "type": "string", "description": "Sender UID" },
+        "senderName": { "type": "string", "description": "Sender display name" },
+        "senderRole": { "type": "string", "description": "Sender role" },
+        "targetRole": { "type": "string", "enum": ["all", "students", "parents", "teachers"], "description": "Target audience" },
+        "title": { "type": "string", "description": "Announcement title" },
+        "content": { "type": "string", "description": "Message content" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["id", "senderId", "senderName", "senderRole", "targetRole", "title", "content"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User account profiles"
+    },
+    "/homework/{homeworkId}": {
+      "schema": { "$ref": "#/entities/Homework" },
+      "description": "School homework assignments"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/AttendanceRecord" },
+      "description": "Daily student attendance tracking"
+    },
+    "/marks/{markId}": {
+      "schema": { "$ref": "#/entities/MarkRecord" },
+      "description": "Student test and exam marks and grades"
+    },
+    "/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/SchoolMessage" },
+      "description": "School-wide and targeted messages and announcements"
+    }
+  }
+}
